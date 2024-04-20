@@ -1,70 +1,63 @@
-# Getting Started with Create React App
+# Web Socket Realtime Message With SessionID
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a demonstration of using WebSocket communication between a React frontend and a Spring Boot backend. It allows users to send and receive messages in real-time using WebSocket connections.
 
-## Available Scripts
+## Overview
+If two clients try to open same endpoint, first client's message changes and last client gets new message. 
+### Example for using
+- First client sends a message
+- First client's first message: Music opened
+- Second client sends a same message with first cliend
+- First client's message changes into: Music closed
+- Second client's first messsage: Music opened
 
-In the project directory, you can run:
+## Features
+- Real-time messaging between users
+- Dynamic message updates based on user actions
+- Use of session ID to manage message state
 
-### `npm start`
+## Getting Started
+1. First create a new Spring Boot project.
+1. Add WebMvcConfigurer to Spring Boot project
+1. Add WebSocket configuration and controller
+1. Run the Spring Boot project 
+1. Run this project
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## WebSocket Configuration in Spring Boot
+```java 
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+@Configuration
+public class MyWebMvcConfigurer implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000") // Allowed origins
+                .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed methods
+                .allowedHeaders("Content-Type", "Authorization"); // Allowed headers
+    }
+}
+```
+## WebSocket Controller in Spring Boot
+```java
+@Controller
+@EnableWebSocketMessageBroker
+public class SocketMessageController {
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    private final Map<String, String> playbackSessions = new HashMap<>();
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    @MessageMapping("/user-message-{userName}")
+    public void sendToOtherUser(@Payload String message, @DestinationVariable String userName, @Header("sessionID") String sessionId) {
+        synchronized (playbackSessions) {
+            String previousSessionId = playbackSessions.get(userName);
+            if (previousSessionId != null) {
+                messagingTemplate.convertAndSend("/queue/reply-" + previousSessionId,
+                        "You have a message from someone: " + message + userName + " closed " + sessionId);
+            }
+            playbackSessions.put(userName, sessionId);
+        }
+        messagingTemplate.convertAndSend("/queue/reply-" + sessionId,
+                "You have a message from someone: " + message + userName + " opened " + sessionId);
+    }
+}
+```
