@@ -1,4 +1,4 @@
-# Web Socket Realtime Message With SessionID
+# React-SpringBoot WebSocket Project
 
 This project is a demonstration of using WebSocket communication between a React frontend and a Spring Boot backend. It allows users to send and receive messages in real-time using WebSocket connections.
 
@@ -23,6 +23,13 @@ If two clients try to open same endpoint, first client's message changes and las
 1. Run the Spring Boot project 
 1. Run this project
 
+## poml.xml
+```java
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket<artifactId>
+</dependency>
+```
 ## WebSocket Configuration in Spring Boot
 ```java 
 
