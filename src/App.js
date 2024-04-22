@@ -23,7 +23,7 @@ function App() {
   }, [])
   return (
     <div className="App">
-      <StompSessionProvider url={'http://localhost:8080/ws-endpoint'} >
+      <StompSessionProvider url={'http://localhost:8080/api/v1.0/ws-endpoint'} >
         <ChildComponent />
         <PublishComponent />
       </StompSessionProvider>

@@ -34,15 +34,19 @@ If two clients try to open same endpoint, first client's message changes and las
 ```java 
 
 @Configuration
-public class MyWebMvcConfigurer implements WebMvcConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000") // Allowed origins
-                .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed methods
-                .allowedHeaders("Content-Type", "Authorization"); // Allowed headers
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/queue");
+        config.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws-endpoint").setAllowedOrigins("http://localhost:3000").withSockJS();
     }
 }
+
 ```
 ## WebSocket Controller in Spring Boot
 ```java
